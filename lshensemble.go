@@ -69,7 +69,7 @@ func createLSHEnsemble(db *sql.DB, minhashTable string) *lshensemble.LshEnsemble
 			panic(err)
 		}
 	}()
-	lsh, err := lshensemble.BootstrapLshEnsemblePlus(lshNumPartition, MinhashSize, lshMaxK, totalNumDomains, records)
+	lsh, err := lshensemble.BootstrapLshEnsemblePlusEquiDepth(lshNumPartition, MinhashSize, lshMaxK, totalNumDomains, records)
 	if err != nil {
 		panic(err)
 	}

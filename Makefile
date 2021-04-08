@@ -43,3 +43,23 @@ build:
 clean:
 	rm -f search *.pdf
 	ls results | grep -v ssd | xargs rm -rf
+
+
+sample_cosmos: 
+	# build
+	sample_queries -pg-table-sets=cosmos_sets -sample-all-sets=true -pg-table-queries=cosmos_queries
+	# -sampling-max-query-size=200 -sampling-num-interval=10 -sampling-num-query=100
+
+sample_cost_cosmos: 
+	# build
+	# sudo /usr/local/bin/drop_caches
+	sample_costs -pg-table-lists=cosmos_inverted_lists -pg-table-sets=cosmos_sets -pg-table-read-set-cost-samples=cosmos_read_set_cost_samples -pg-table-read-list-cost-samples=cosmos_read_list_cost_samples -cost-max-list-size=200 -cost-list-size-step=10 -cost-sample-per-size=10 -pg-table-queries=cosmos_queries
+
+minhash_cosmos: 
+	# build
+	create_minhash -pg-table-lists=cosmos_inverted_lists -pg-table-sets=cosmos_sets -pg-table-minhash=cosmos_minhash -recreate=true
+	#-nworker=32
+
+cosmos: 
+	# build
+	topk -benchmark=cosmos

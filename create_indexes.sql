@@ -3,3 +3,6 @@ create index canada_us_uk_inverted_lists_token_idx on canada_us_uk_inverted_list
 
 create index webtable_sets_id_idx on webtable_sets(id);
 create index webtable_inverted_lists_token_idx on webtable_inverted_lists(token);
+
+create index cosmos_sets_id_idx on cosmos_sets(id);
+create index cosmos_inverted_lists_token_idx on cosmos_inverted_lists(token);

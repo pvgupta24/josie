@@ -35,4 +35,7 @@ func main() {
 	if benchmark == "webtable" {
 		joise.RunWebTableExperiments(db, filepath.Join(output, benchmark), cpuProfile, true)
 	}
+	if benchmark == "cosmos" {
+		joise.RunCosmosExperiments(db, filepath.Join(output, benchmark), cpuProfile, true)
+	}
 }

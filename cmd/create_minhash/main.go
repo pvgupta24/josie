@@ -61,7 +61,7 @@ func main() {
 			)
 			SELECT set2token.id, set2token.size, b.raw_token
 			FROM set2token, %s AS b
-			WHERE set2token.token = b.token;
+			WHERE set2token.token = b.token ORDER BY set2token.id ASC;
 			`,
 		pq.QuoteIdentifier(pgTableSets),
 		pq.QuoteIdentifier(pgTableMinhash),
@@ -73,6 +73,7 @@ func main() {
 	var lastSize int
 	var mh *lshensemble.Minhash
 	insertedIDs := make(map[int64]bool)
+	count := 1
 	for rows.Next() {
 		var id int64
 		var size int
@@ -80,9 +81,10 @@ func main() {
 		if err := rows.Scan(&id, &size, &rawToken); err != nil {
 			panic(err)
 		}
+		count += 1
 		// Sanity check: inserted id should not appear again
 		if _, again := insertedIDs[id]; again {
-			panic("Inserted id appeared again!")
+			panic(fmt.Sprintf("Inserted id appeared again for set_id=%d after %d rows!", id, count))
 		}
 		if id != lastID && mh != nil {
 			// Insert

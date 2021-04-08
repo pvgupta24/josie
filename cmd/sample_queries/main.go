@@ -15,6 +15,7 @@ var (
 	pgTableQueries                                       string
 	numQueries, numIntervals, minQuerySize, maxQuerySize int
 	samplePerStep                                        int
+	sampleAllSets										 bool
 )
 
 func main() {
@@ -26,13 +27,50 @@ func main() {
 	flag.IntVar(&numIntervals, "sampling-num-interval", 10, "Number of stratified sampling intervals for query sizes")
 	flag.IntVar(&minQuerySize, "sampling-min-query-size", 10, "Minimum query set size to sample")
 	flag.IntVar(&maxQuerySize, "sampling-max-query-size", 100000, "Maximum query set size to sample")
+	flag.BoolVar(&sampleAllSets, "sample-all-sets", false, "To find similar sets within base sets")
 	flag.Parse()
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s sslmode=disable", pgServer, pgPort))
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	sampleSetsStratified(db, minQuerySize, maxQuerySize, numIntervals, numQueries)
+	if sampleAllSets == false {
+		sampleSetsStratified(db, minQuerySize, maxQuerySize, numIntervals, numQueries)
+	} else {
+		allSets(db)
+	}
+}
+
+func allSets(db *sql.DB) {
+	// Create query table
+	_, err := db.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, pq.QuoteIdentifier(pgTableQueries)))
+	if err != nil {
+		panic(err)
+	}
+	_, err = db.Exec(fmt.Sprintf(`CREATE TABLE %s (id integer, tokens integer[]);`,
+		pq.QuoteIdentifier(pgTableQueries)))
+	if err != nil {
+		panic(err)
+	}
+
+	s := fmt.Sprintf(`
+	INSERT INTO %s (id, tokens) 
+	SELECT id, tokens FROM %s;`, pq.QuoteIdentifier(pgTableQueries), pq.QuoteIdentifier(pgTableSets))
+	
+	// if err := db.QueryRow(fmt.Sprintf(
+	// 	`SELECT count(id) FROM %s WHERE num_non_singular_token >= $1 AND num_non_singular_token < $2;`,
+	// 	pq.QuoteIdentifier(pgTableSets)), start, end).Scan(&count); err != nil {
+	// 	panic(err)
+	// }
+	// if count < intervalSampleSize {
+	// 	log.Fatalf("Cannot sample %d sets from interval [%d, %d), which has %d sets",
+	// 		intervalSampleSize, start, end, count)
+	// }
+	_, err = db.Exec(s)
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func sampleSetsStratified(db *sql.DB, minQuerySize, maxQuerySize, numIntervals, numQueries int) {

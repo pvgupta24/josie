@@ -8,7 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"os/exec"
+	// "os/exec"
 	"path/filepath"
 	"runtime/pprof"
 	"strconv"
@@ -102,15 +102,51 @@ var (
 		"canada_us_uk_queries_1k":   20,
 		"canada_us_uk_queries_10k":  20,
 		"canada_us_uk_queries_100k": 20,
+		"cosmos_queries": 20,
 	}
 	ks = []int{
-		1,
+		// 1,
 		5,
-		10,
-		20,
-		30,
-		50,
+		// 10,
+		// 20,
+		// 30,
+		// 50,
 	}
+
+	cosmosSetTables = map[int]string{
+		100: "cosmos_sets",
+	}
+	cosmosListTables = map[int]string{
+		100: "cosmos_inverted_lists",
+		// 75:  "cosmos_inverted_lists_75pct",
+		// 50:  "cosmos_inverted_lists_50pct",
+		// 25:  "cosmos_inverted_lists_25pct",
+	}
+	cosmosReadSetCostSampleTables = map[int]string{
+		100: "cosmos_read_set_cost_samples",
+		// 75:  "cosmos_read_set_cost_samples_75pct",
+		// 50:  "cosmos_read_set_cost_samples_50pct",
+		// 25:  "cosmos_read_set_cost_samples_25pct",
+	}
+	cosmosReadListCostSampleTables = map[int]string{
+		100: "cosmos_read_list_cost_samples",
+		// 75:  "cosmos_read_list_cost_samples_75pct",
+		// 50:  "cosmos_read_list_cost_samples_50pct",
+		// 25:  "cosmos_read_list_cost_samples_25pct",
+	}
+	cosmosMinhashTables = map[int]string{
+		100: "cosmos_minhash",
+		// 75:  "cosmos_minhash_75pct",
+		// 50:  "cosmos_minhash_50pct",
+		// 25:  "cosmos_minhash_40pct",
+	}
+	cosmosQueryTables = [][]string{
+		[]string{"100", "cosmos_queries"},
+		// []string{"100", "cosmos_queries_100"},
+		// []string{"1k", "cosmos_queries_1k"},
+		// []string{"10k", "cosmos_queries_10k"},
+	}
+
 	// The budget for expensive estimation when choosing between
 	// reading candidate set and reading the next batch of posting lists
 	// This is the cap on num_candidate * num_estimation.
@@ -133,7 +169,7 @@ var (
 		// "probe_set_suffix":              searchProbeSetSuffix,
 
 		// ProbeSet-D
-		"probe_set_optimized":           searchProbeSetOptimized,
+		// "probe_set_optimized":           searchProbeSetOptimized,
 
 		// JOSIE
 		"merge_probe_cost_model_greedy": searchMergeProbeCostModelGreedy,
@@ -206,6 +242,26 @@ func RunWebTableExperiments(db *sql.DB, outputDir string, cpuProfile bool, useMe
 		resetCostFunctionParameters(db, readListCostSampleTable, readSetCostSampleTable)
 		// Start experiments
 		runExperiments(db, listTable, setTable, minhashTable, webtableQueryTables,
+			ks, outputSubDir, cpuProfile, useMemTokenTable, pct == 100)
+	}
+}
+
+
+// RunWebTableExperiments run all experiments using Web Table
+func RunCosmosExperiments(db *sql.DB, outputDir string, cpuProfile bool, useMemTokenTable bool) {
+	for pct, setTable := range cosmosSetTables {
+		log.Printf("== Begin experiments using %d percent of sets", pct)
+		// Make the subdirectory for this index size
+		outputSubDir := filepath.Join(outputDir, strconv.Itoa(pct))
+		// Get required table names
+		listTable := cosmosListTables[pct]
+		minhashTable := cosmosMinhashTables[pct]
+		readListCostSampleTable := cosmosReadListCostSampleTables[pct]
+		readSetCostSampleTable := cosmosReadSetCostSampleTables[pct]
+		// Reset cost parameters
+		resetCostFunctionParameters(db, readListCostSampleTable, readSetCostSampleTable)
+		// Start experiments
+		runExperiments(db, listTable, setTable, minhashTable, cosmosQueryTables,
 			ks, outputSubDir, cpuProfile, useMemTokenTable, pct == 100)
 	}
 }
@@ -297,10 +353,10 @@ func runExperiment(
 	searchFunc func(db *sql.DB, listTable, setTable string, tb tokenTable, q rawTokenSet, k int, queryIgnoreSelf bool) ([]searchResult, experimentResult),
 	outputFilename, cpuProfileFilename string,
 ) {
-	log.Println("Dropping system file cache...")
-	if err := exec.Command("sudo", "/usr/local/bin/drop_caches").Run(); err != nil {
-		panic(err)
-	}
+	// log.Println("Dropping system file cache...")
+	// if err := exec.Command("sudo", "/usr/local/bin/drop_caches").Run(); err != nil {
+	// 	panic(err)
+	// }
 	if cpuProfileFilename != "" {
 		f, err := os.Create(cpuProfileFilename)
 		if err != nil {
@@ -341,10 +397,10 @@ func runLSHExperiment(
 	searchFunc func(db *sql.DB, setTable string, lsh *lshensemble.LshEnsemble, tb tokenTable, q rawTokenSet, k int, queryIgnoreSelf bool, groundTruth []searchResult) ([]searchResult, experimentResult),
 	outputFilename, cpuProfileFilename string,
 ) {
-	log.Println("Dropping system file cache...")
-	if err := exec.Command("sudo", "/usr/local/bin/drop_caches").Run(); err != nil {
-		panic(err)
-	}
+	// log.Println("Dropping system file cache...")
+	// if err := exec.Command("sudo", "/usr/local/bin/drop_caches").Run(); err != nil {
+	// 	panic(err)
+	// }
 	if cpuProfileFilename != "" {
 		f, err := os.Create(cpuProfileFilename)
 		if err != nil {
@@ -354,6 +410,7 @@ func runLSHExperiment(
 		defer pprof.StopCPUProfile()
 	}
 	perfs := []*experimentResult{}
+	
 	rand.Seed(int64(43))
 	for i, j := range rand.Perm(len(queries)) {
 		query := queries[j]
