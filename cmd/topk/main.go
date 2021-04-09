@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"time"
 	"github.com/ekzhu/josie"
 )
 
@@ -17,6 +18,7 @@ var (
 )
 
 func main() {
+	start := time.Now()
 	flag.StringVar(&pgServer, "pg-server", "localhost", "Postgres server addresss")
 	flag.StringVar(&pgPort, "pg-port", "5442", "Postgres server port")
 	flag.StringVar(&benchmark, "benchmark", "canada_us_uk", "The name of the benchmark dataset to use")
@@ -38,4 +40,6 @@ func main() {
 	if benchmark == "cosmos" {
 		joise.RunCosmosExperiments(db, filepath.Join(output, benchmark), cpuProfile, true)
 	}
+	duration := time.Since(start)
+	fmt.Println(duration)
 }

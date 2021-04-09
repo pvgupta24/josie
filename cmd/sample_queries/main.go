@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"time"
 	"github.com/lib/pq"
 )
 
@@ -19,6 +20,7 @@ var (
 )
 
 func main() {
+	start := time.Now()
 	flag.StringVar(&pgServer, "pg-server", "localhost", "Postgres server addresss")
 	flag.StringVar(&pgPort, "pg-port", "5442", "Postgres server port")
 	flag.StringVar(&pgTableSets, "pg-table-sets", "canada_us_uk_sets", "Postgres table for sets")
@@ -39,6 +41,8 @@ func main() {
 	} else {
 		allSets(db)
 	}
+	duration := time.Since(start)
+	fmt.Println(duration)
 }
 
 func allSets(db *sql.DB) {

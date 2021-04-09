@@ -24,6 +24,7 @@ var (
 )
 
 func main() {
+	start := time.Now()
 	flag.StringVar(&pgServer, "pg-server", "localhost", "Postgres server addresss")
 	flag.StringVar(&pgPort, "pg-port", "5442", "Postgres server port")
 	flag.StringVar(&pgTableSets, "pg-table-sets", "canada_us_uk_sets", "Postgres table for sets")
@@ -43,6 +44,9 @@ func main() {
 	defer db.Close()
 	sampleReadSetCost(db, pgTableQueries, pgTableReadSetCostSamples)
 	sampleReadListCost(db, pgTableReadListCostSamples, minListLength, maxListLength, listLengthStep, samplePerStep)
+	
+	duration := time.Since(start)
+	fmt.Println(duration)
 }
 
 func sampleReadSetCost(db *sql.DB, pgTableQueries, pgTableReadSetCostSamples string) {

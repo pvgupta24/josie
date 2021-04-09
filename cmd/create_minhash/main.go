@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 
+	"time"
 	"github.com/ekzhu/josie"
 	"github.com/ekzhu/lshensemble"
 	"github.com/lib/pq"
@@ -25,6 +26,7 @@ type rawTokenSet struct {
 }
 
 func main() {
+	start := time.Now()
 	flag.StringVar(&pgServer, "pg-server", "localhost", "Postgres server addresss")
 	flag.StringVar(&pgPort, "pg-port", "5442", "Postgres server port")
 	flag.StringVar(&pgTableSets, "pg-table-sets", "canada_us_uk_sets", "Postgres table for sets")
@@ -119,4 +121,7 @@ func main() {
 	if err := rows.Err(); err != nil {
 		panic(err)
 	}
+	
+	duration := time.Since(start)
+	fmt.Println(duration)
 }
